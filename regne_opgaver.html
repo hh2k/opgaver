@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Du er en regneboss! 💪</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #e8e8e8;
+  }
+
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: #fff;
+    border-bottom: 2px solid #eee;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+  }
+
+  .top-bar label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 12pt;
+    color: #555;
+  }
+
+  .top-bar input[type=number] {
+    width: 55px;
+    padding: 5px 8px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 12pt;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    text-align: center;
+    color: #333;
+  }
+
+  .btn {
+    padding: 7px 20px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 12pt;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+  .btn-generate { background: linear-gradient(135deg, #ff6b35, #f7c948); box-shadow: 0 3px 10px rgba(255,107,53,0.3); }
+  .btn-print    { background: linear-gradient(135deg, #4ecdc4, #56c596); box-shadow: 0 3px 10px rgba(78,205,196,0.3); }
+
+  .pages-wrap {
+    padding: 75px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 8mm 10mm;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+
+  .page-num-badge {
+    text-align: right;
+    font-family: 'Fredoka One', cursive;
+    font-size: 8pt;
+    color: #ccc;
+    margin-bottom: 2mm;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 4mm;
+  }
+  .header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22pt;
+    color: #ff6b35;
+    line-height: 1.1;
+  }
+  .header h1 span { color: #4ecdc4; }
+  .header .sub {
+    font-family: 'Fredoka One', cursive;
+    font-size: 10pt;
+    color: #bbb;
+    margin-top: 1mm;
+    letter-spacing: 0.3px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4mm;
+  }
+
+  .box {
+    border-radius: 9px;
+    padding: 3mm 4mm;
+    border: 2.5px solid;
+  }
+
+  .box[data-pos="0"] { background: #fff9e6; border-color: #f7c948; }
+  .box[data-pos="1"] { background: #e8f8ff; border-color: #4ecdc4; }
+  .box[data-pos="2"] { background: #fff0f0; border-color: #ff6b35; }
+  .box[data-pos="3"] { background: #f0fff4; border-color: #56c596; }
+
+  .box-text {
+    border-radius: 9px;
+    padding: 3mm 4mm;
+    border: 2.5px solid #9b72e8;
+    background: #f5f0ff;
+  }
+
+  .box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5mm;
+  }
+
+  .box-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 11pt;
+    color: #fff;
+    border-radius: 5px;
+    padding: 1mm 0;
+    flex: 1;
+    text-align: center;
+  }
+
+  .box[data-pos="0"] .box-title { background: #f7c948; }
+  .box[data-pos="1"] .box-title { background: #4ecdc4; }
+  .box[data-pos="2"] .box-title { background: #ff6b35; }
+  .box[data-pos="3"] .box-title { background: #56c596; }
+  .box-text .box-title           { background: #9b72e8; }
+
+  .pen-check {
+    width: 7mm;
+    height: 7mm;
+    border: 2.5px solid #aaa;
+    border-radius: 3px;
+    margin-left: 3mm;
+    flex-shrink: 0;
+    background: #fff;
+  }
+
+  ul.problems { list-style: none; }
+  ul.problems li {
+    display: flex;
+    align-items: center;
+    border-bottom: 1.2px dashed #ddd;
+    padding: 1.5mm 0;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #333;
+  }
+  ul.problems li:last-child { border-bottom: none; }
+  .num  { font-size: 7pt; color: #bbb; font-weight: 600; width: 5mm; flex-shrink: 0; }
+  .sym  { font-size: 8.5pt; margin-right: 2mm; flex-shrink: 0; }
+  .eq   { flex: 1; padding-left: 1.5mm; }
+  .ans  { border-bottom: 1.8px solid #999; width: 12mm; height: 4.5mm; display: inline-block; flex-shrink: 0; }
+
+  ul.text-problems { list-style: none; }
+  ul.text-problems li {
+    border-bottom: 1.2px dashed #c9b8f0;
+    padding: 2mm 0;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #333;
+  }
+  ul.text-problems li:last-child { border-bottom: none; }
+  .text-q {
+    display: flex;
+    gap: 1.5mm;
+    margin-bottom: 1.5mm;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+  .text-q .num { color: #b39ddb; margin-top: 1px; }
+  .text-ans-row {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    padding-left: 5mm;
+    font-size: 7.5pt;
+    color: #999;
+    font-weight: 600;
+  }
+  .text-ans-line {
+    border-bottom: 1.8px solid #aaa;
+    flex: 1;
+    height: 4mm;
+    display: inline-block;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .top-bar { display: none !important; }
+    .pages-wrap { padding: 0; gap: 0; }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      box-shadow: none;
+      page-break-after: always;
+      padding: 8mm 10mm;
+    }
+    .page:last-child { page-break-after: avoid; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <label>Antal sider:</label>
+  <input type="number" id="pageCount" value="10" min="1" max="50">
+  <label>Maks tal:</label>
+  <input type="number" id="maxNum" value="20" min="5" max="1000">
+  <button class="btn btn-generate" onclick="generateAll()">🎲 Generer</button>
+  <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+</div>
+
+<div class="pages-wrap" id="pagesWrap"></div>
+
+<script>
+// ── TEKSTOPGAVE BIBLIOTEK ──
+const TEXT_POOL = [
+  { q: "Du har 24 æbler. Du giver 9 til din ven. Hvor mange æbler har du tilbage?", a: "15" },
+  { q: "En bil kører 60 km i timen. Hvor langt kører den på 2 timer?", a: "120 km" },
+  { q: "Der er 36 elever i en klasse. 14 er piger. Hvor mange er drenge?", a: "22" },
+  { q: "En is koster 12 kr. Hvor meget koster 5 is?", a: "60 kr" },
+  { q: "Du har 50 kr. Du køber en bog for 23 kr. Hvor mange penge har du tilbage?", a: "27 kr" },
+  { q: "En hund har 4 ben. Hvor mange ben har 7 hunde tilsammen?", a: "28" },
+  { q: "Mia samler 8 sten hver dag. Hvor mange sten har hun efter 6 dage?", a: "48" },
+  { q: "Der er 45 slik i en pose. Du spiser 17. Hvor mange er der tilbage?", a: "28" },
+  { q: "Et tog kører 100 km i timen. Hvor langt kører det på en halv time?", a: "50 km" },
+  { q: "Du har 3 kasser med 9 biler i hver. Hvor mange biler har du i alt?", a: "27" },
+  { q: "En biograf har 80 sæder. 53 er optaget. Hvor mange er ledige?", a: "27" },
+  { q: "Du køber 4 pakker med 6 farver i hver. Hvor mange farver er der i alt?", a: "24" },
+  { q: "En svømmetur er 25 meter. Hvor langt svømmer du på 8 ture?", a: "200 m" },
+  { q: "Der er 7 dage om ugen. Hvor mange dage er der i 9 uger?", a: "63" },
+  { q: "Du har 65 kr og finder 18 kr. Hvor mange penge har du nu?", a: "83 kr" },
+  { q: "En pakke har 12 kiks. Du spiser 5. Hvor mange kiks er tilbage?", a: "7" },
+  { q: "En fugl flyver 40 km i timen. Hvor langt flyver den på 3 timer?", a: "120 km" },
+  { q: "Der er 5 hold med 6 spillere på hvert hold. Hvor mange spillere er der?", a: "30" },
+  { q: "Du har 90 kr. Du køber en t-shirt for 48 kr. Hvad har du tilbage?", a: "42 kr" },
+  { q: "En kat spiser 3 gange om dagen. Hvor mange gange spiser den på en uge?", a: "21" },
+  { q: "Du plukker 15 jordbær om dagen i 4 dage. Hvor mange har du i alt?", a: "60" },
+  { q: "En cyklist kører 15 km i timen. Hvor langt kører han på 4 timer?", a: "60 km" },
+  { q: "Der er 56 bøger på en hylde. 29 er lånt ud. Hvor mange er tilbage?", a: "27" },
+  { q: "Du har 8 poser med 9 bolcher i hver. Hvor mange bolcher er der?", a: "72" },
+  { q: "Der er 100 kr i din sparegris. Du putter 35 kr mere i. Hvor meget er der nu?", a: "135 kr" },
+  { q: "En klasse planter 6 blomster om dagen i 7 dage. Hvor mange blomster?", a: "42" },
+  { q: "Et tog har 8 vogne med 32 sæder i hver. Hvor mange sæder er der?", a: "256" },
+  { q: "Du har 78 kort. Du giver 33 til din søster. Hvor mange har du tilbage?", a: "45" },
+  { q: "En kage er delt i 8 stykker. Du spiser 3. Hvor mange stykker er der tilbage?", a: "5" },
+  { q: "Der er 24 timer i en dag. Hvor mange timer er der i 3 dage?", a: "72" },
+  { q: "Du samler 7 flasker om dagen. Hvor mange flasker har du efter 9 dage?", a: "63" },
+  { q: "En have har 5 rækker med 8 plantehuller. Hvor mange plantehuller er der?", a: "40" },
+  { q: "Du har 100 kr. Du køber juice for 19 kr og en is for 12 kr. Hvad er tilbage?", a: "69 kr" },
+  { q: "En ko giver 25 liter mælk om dagen. Hvor mange liter giver den på 4 dage?", a: "100 liter" },
+  { q: "Der er 32 fugle i et træ. 17 flyver væk. Hvor mange sidder tilbage?", a: "15" },
+  { q: "Du løber 6 km om dagen i 5 dage. Hvor langt har du løbet i alt?", a: "30 km" },
+  { q: "En butik sælger 9 aviser om morgenen og 14 om eftermiddagen. Hvor mange i alt?", a: "23" },
+  { q: "Du har 4 bunker med 7 pandekager i hver. Hvor mange pandekager er der?", a: "28" },
+  { q: "Der bor 48 børn i en gade. 27 er drenge. Hvor mange er piger?", a: "21" },
+  { q: "En svane kan flyve 55 km i timen. Hvor langt flyver den på 2 timer?", a: "110 km" },
+  { q: "Du har 6 æsker med 8 blyanter i hver. Hvor mange blyanter er der i alt?", a: "48" },
+  { q: "Der er 70 kr i kassen. Du bruger 28 kr. Hvor mange kr er der tilbage?", a: "42 kr" },
+  { q: "En skoleklasse har 25 elever. 3 er syge i dag. Hvor mange mødte op?", a: "22" },
+  { q: "Du bagte 9 muffins. Du spiste 2 og gav 4 til naboen. Hvor mange er tilbage?", a: "3" },
+  { q: "En lille fisk svømmer 4 meter i sekundet. Hvor langt svømmer den på 9 sekunder?", a: "36 m" },
+  { q: "Der er 5 skoledage om ugen. Hvor mange skoledage er der på 8 uger?", a: "40" },
+  { q: "Du har 3 kasser med 12 appelsiner i hver. Hvor mange appelsiner er der?", a: "36" },
+  { q: "En cykel koster 349 kr. Du har 295 kr. Hvad mangler du?", a: "54 kr" },
+  { q: "Der er 9 æg i en bakke. Du har 6 bakker. Hvor mange æg er der i alt?", a: "54" },
+  { q: "Du læser 12 sider om dagen. Hvor mange sider har du læst efter 5 dage?", a: "60" },
+  { q: "En biruche har 7 huse med 8 bier i hvert hus. Hvor mange bier er der?", a: "56" },
+  { q: "Du har 85 kr. Du bruger 47 kr i kiosken. Hvad har du tilbage?", a: "38 kr" },
+  { q: "En bold hopper 6 gange i minuttet. Hvor mange hop på 9 minutter?", a: "54" },
+  { q: "Der er 16 drenge og 13 piger til fest. Hvor mange børn er der i alt?", a: "29" },
+  { q: "Du cykler 8 km til skole. Hvor langt cykler du på en uge (5 dage, frem og tilbage)?", a: "80 km" },
+  { q: "En papegøje kan sige 6 ord. 4 papegøjer er i butikken. Hvor mange ord kan de tilsammen?", a: "24" },
+  { q: "Du planter 9 rækker med 6 tulipaner i hver. Hvor mange tulipaner er der?", a: "54" },
+  { q: "En pakke koster 35 kr. Du køber 2 pakker. Hvad er prisen i alt?", a: "70 kr" },
+  { q: "Der er 60 minutter i en time. Hvor mange minutter er der i 2 timer?", a: "120" },
+  { q: "Du finder 8 sten pr dag i 7 dage. Hvor mange sten har du i alt?", a: "56" },
+  { q: "En hest løber 45 km i timen. Hvor langt løber den på 2 timer?", a: "90 km" },
+  { q: "Du har 99 kr. Du giver 45 kr til din bror. Hvad har du tilbage?", a: "54 kr" },
+];
+
+const BOX_TITLES = [
+  { emoji: '⭐', label: 'Boks 1' },
+  { emoji: '🌊', label: 'Boks 2' },
+  { emoji: '🔥', label: 'Boks 3' },
+  { emoji: '🌿', label: 'Boks 4' },
+];
+
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function getMax() { return Math.max(5, parseInt(document.getElementById('maxNum').value) || 20); }
+
+function makePlus(max)  {
+  const a = rnd(1, max - 1);
+  const b = rnd(1, max - a);
+  return { sym:'➕', text:`${a} + ${b} =` };
+}
+function makeMinus(max) {
+  const a = rnd(2, max);
+  const b = rnd(1, a - 1);
+  return { sym:'➖', text:`${a} − ${b} =` };
+}
+function makeGange(max) {
+  // for gange: find factor pairs where a×b ≤ max, both ≥ 2
+  const maxF = Math.min(max, 9);
+  const a = rnd(2, maxF);
+  const bMax = Math.min(maxF, Math.floor(max / a));
+  const b = bMax >= 2 ? rnd(2, bMax) : 2;
+  return { sym:'✖️', text:`${a} × ${b} =` };
+}
+
+function makeProblems(usedOnPage) {
+  const max = getMax();
+  const types = [
+    () => makePlus(max), () => makePlus(max), () => makePlus(max),
+    () => makeMinus(max), () => makeMinus(max), () => makeMinus(max),
+    () => makeGange(max), () => makeGange(max), () => makeGange(max), () => makeGange(max)
+  ];
+  for (let i = types.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [types[i], types[j]] = [types[j], types[i]];
+  }
+  const result = [];
+  for (const fn of types) {
+    let p, attempts = 0;
+    do { p = fn(); attempts++; } while (usedOnPage.has(p.text) && attempts < 20);
+    usedOnPage.add(p.text);
+    result.push(p);
+  }
+  return result;
+}
+
+// Pick N unique random items from pool per page (reshuffle when exhausted)
+let poolQueue = [];
+function pickTextProblems(n) {
+  if (poolQueue.length < n) {
+    // reshuffle entire pool
+    const shuffled = [...TEXT_POOL];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    poolQueue = [...poolQueue, ...shuffled];
+  }
+  return poolQueue.splice(0, n);
+}
+
+function makeRegularBox(title, pos, usedOnPage) {
+  const problems = makeProblems(usedOnPage);
+  const box = document.createElement('div');
+  box.className = 'box';
+  box.setAttribute('data-pos', pos);
+
+  const hdr = document.createElement('div');
+  hdr.className = 'box-header';
+  const ttl = document.createElement('div');
+  ttl.className = 'box-title';
+  ttl.textContent = `${title.emoji} ${title.label}`;
+  hdr.appendChild(ttl);
+  const chk = document.createElement('div');
+  chk.className = 'pen-check';
+  hdr.appendChild(chk);
+  box.appendChild(hdr);
+
+  const ul = document.createElement('ul');
+  ul.className = 'problems';
+  problems.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="num">${i+1}.</span><span class="sym">${p.sym}</span><span class="eq">${p.text}</span><span class="ans"></span>`;
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  return box;
+}
+
+function makeTextBox(emoji, label, problems) {
+  const box = document.createElement('div');
+  box.className = 'box-text';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'box-header';
+  const ttl = document.createElement('div');
+  ttl.className = 'box-title';
+  ttl.textContent = `${emoji} ${label}`;
+  hdr.appendChild(ttl);
+  const chk = document.createElement('div');
+  chk.className = 'pen-check';
+  hdr.appendChild(chk);
+  box.appendChild(hdr);
+
+  const ul = document.createElement('ul');
+  ul.className = 'text-problems';
+  problems.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="text-q"><span class="num">${i+1}.</span><div style="flex:1">${p.q}</div></div>
+      <div class="text-ans-row">Svar: <span class="text-ans-line"></span></div>
+    `;
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  return box;
+}
+
+const HEADLINES = [
+  { h: '💪 Du er en <span>regneboss!</span>',        s: 'Kom igennem alle boksene — du klarer det! 🔥' },
+  { h: '🧠 Tænd for <span>hjernerne!</span>',         s: 'Vis hvad du kan — du er skarpere end du tror! ⚡' },
+  { h: '🚀 Klar til <span>opsendelse!</span>',        s: 'Regn dig igennem og løft af! 🌙' },
+  { h: '🏆 Dagens <span>mesterregneren!</span>',      s: 'Alle opgaver klaret = ubesejret! 👑' },
+  { h: '⚡ Fuld <span>regnefart!</span>',             s: 'Ingen opgave er for svær for dig! 💥' },
+  { h: '🎯 Hit alle <span>boksene!</span>',           s: 'Fokus på, sæt flueben — du er på vej! 🏅' },
+  { h: '🔥 Du er <span>on fire!</span>',              s: 'Lav dem alle og tag en velfortjent pause! 😎' },
+  { h: '🦁 Vis dine <span>regnekræfter!</span>',     s: 'Du er stærkere end alle tal! 💪' },
+  { h: '⭐ Stjerneregneren <span>er tilbage!</span>', s: 'En boks ad gangen — du når toppen! 🌟' },
+  { h: '🎮 Level up: <span>Matematik!</span>',        s: 'Svar rigtigt og vind dagens pause! 🕹️' },
+  { h: '🏄 Surf igennem <span>opgaverne!</span>',     s: 'Bølgerne er dine — kør derudad! 🌊' },
+  { h: '🦅 Flyv over <span>regnestykket!</span>',    s: 'Du har vindt før — du vinder igen! 🏆' },
+  { h: '🎸 Rock dine <span>regnestykker!</span>',    s: 'Hvert svar er et beat — spil dem alle! 🎵' },
+  { h: '🧲 Tiltræk <span>de rigtige svar!</span>',   s: 'Koncentrer dig — du har det i dig! 🎯' },
+  { h: '🌈 Gør matematik <span>farverig!</span>',    s: 'Lav dem alle og dagen er din! ✨' },
+];
+
+let headlineQueue = [];
+function pickHeadline() {
+  if (headlineQueue.length === 0) {
+    headlineQueue = [...HEADLINES];
+    for (let i = headlineQueue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [headlineQueue[i], headlineQueue[j]] = [headlineQueue[j], headlineQueue[i]];
+    }
+  }
+  return headlineQueue.pop();
+}
+
+function generateAll() {
+  const wrap = document.getElementById('pagesWrap');
+  const pageCount = Math.max(1, Math.min(50, parseInt(document.getElementById('pageCount').value) || 10));
+  wrap.innerHTML = '';
+  poolQueue = [];
+  headlineQueue = [];
+
+  for (let p = 0; p < pageCount; p++) {
+    const page = document.createElement('div');
+    page.className = 'page';
+
+    const badge = document.createElement('div');
+    badge.className = 'page-num-badge';
+    badge.textContent = `Side ${p + 1}`;
+    page.appendChild(badge);
+
+    const hl = pickHeadline();
+    const header = document.createElement('div');
+    header.className = 'header';
+    header.innerHTML = `<h1>${hl.h}</h1><div class="sub">${hl.s}</div>`;
+    page.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    const usedOnPage = new Set();
+    BOX_TITLES.forEach((title, pos) => grid.appendChild(makeRegularBox(title, pos, usedOnPage)));
+
+    const txtA = pickTextProblems(5);
+    const txtB = pickTextProblems(5);
+    grid.appendChild(makeTextBox('📖', 'Tekstopgaver A', txtA));
+    grid.appendChild(makeTextBox('🧩', 'Tekstopgaver B', txtB));
+
+    page.appendChild(grid);
+    wrap.appendChild(page);
+  }
+}
+
+generateAll();
+</script>
+</body>
+</html>
