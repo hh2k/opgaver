@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Lær Skak! ♟</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Nunito',sans-serif; background:#e8e8e8; }
+
+  /* TOP BAR */
+  .top-bar {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:#fff; border-bottom:2px solid #eee;
+    padding:10px 20px; display:flex; align-items:center;
+    gap:12px; justify-content:center;
+    box-shadow:0 2px 10px rgba(0,0,0,.08); flex-wrap:wrap;
+  }
+  .top-bar label { font-family:'Fredoka One',cursive; font-size:12pt; color:#555; }
+  .top-bar input[type=number] {
+    width:55px; padding:5px 8px;
+    font-family:'Fredoka One',cursive; font-size:12pt;
+    border:2px solid #ddd; border-radius:10px; text-align:center;
+  }
+  .btn {
+    padding:7px 20px; font-family:'Fredoka One',cursive;
+    font-size:12pt; color:#fff; border:none; border-radius:25px;
+    cursor:pointer; transition:transform .1s;
+  }
+  .btn:hover { transform:translateY(-2px); }
+  .btn-gen   { background:linear-gradient(135deg,#5c3fa5,#9b72e8); box-shadow:0 3px 10px rgba(92,63,165,.3); }
+  .btn-print { background:linear-gradient(135deg,#4ecdc4,#56c596); box-shadow:0 3px 10px rgba(78,205,196,.3); }
+
+  /* PAGES */
+  .pages-wrap { padding:72px 20px 20px; display:flex; flex-direction:column; align-items:center; gap:20px; }
+  .page { background:#fff; width:210mm; min-height:297mm; padding:8mm 10mm; box-shadow:0 4px 20px rgba(0,0,0,.12); }
+
+  /* PAGE HEADER */
+  .pg-badge { text-align:right; font-family:'Fredoka One',cursive; font-size:7.5pt; color:#ccc; margin-bottom:1mm; }
+  .pg-header { text-align:center; margin-bottom:3mm; }
+  .pg-header h1 { font-family:'Fredoka One',cursive; font-size:19pt; color:#5c3fa5; line-height:1.1; }
+  .pg-header h1 span { color:#f7c948; }
+  .pg-header .sub { font-family:'Fredoka One',cursive; font-size:8pt; color:#bbb; margin-top:1mm; }
+
+  /* LEGEND */
+  .legend { display:flex; justify-content:center; gap:3mm; margin-bottom:3.5mm; flex-wrap:wrap; }
+  .legend-item { font-size:7pt; font-weight:700; color:#555; display:flex; align-items:center; gap:1mm; }
+  .lp { font-size:10pt; }
+  .lw { color:#fff; text-shadow:0 0 2px #333,0 0 2px #333; background:#666; border-radius:2px; padding:0 1px; }
+  .lb { color:#111; }
+  .focus-dot { width:8px; height:8px; border-radius:50%; background:#ff6b35; display:inline-block; border:1.5px solid #c0392b; }
+
+  /* EXERCISE GRID */
+  .ex-grid { display:grid; grid-template-columns:1fr 1fr; gap:3.5mm; }
+
+  /* EXERCISE BOX */
+  .ex-box { border-radius:8px; padding:2.5mm 3mm; border:2.5px solid; display:flex; flex-direction:column; align-items:center; }
+  .c-rook   { background:#e8f0ff; border-color:#3a7bd5; }
+  .c-bishop { background:#e8fff5; border-color:#27ae60; }
+  .c-knight { background:#fff0e8; border-color:#e67e22; }
+  .c-queen  { background:#f5f0ff; border-color:#9b72e8; }
+  .c-king   { background:#fffbe8; border-color:#e0a800; }
+  .c-pawn   { background:#e8ffff; border-color:#4ecdc4; }
+  .c-check  { background:#fff0f0; border-color:#e74c3c; }
+  .c-mate   { background:#fff5e8; border-color:#d35400; }
+
+  .ex-label {
+    font-family:'Fredoka One',cursive; font-size:9pt; color:#fff;
+    border-radius:4px; padding:.5mm 3mm; margin-bottom:2mm;
+    width:100%; text-align:center;
+  }
+  .c-rook   .ex-label { background:#3a7bd5; }
+  .c-bishop .ex-label { background:#27ae60; }
+  .c-knight .ex-label { background:#e67e22; }
+  .c-queen  .ex-label { background:#9b72e8; }
+  .c-king   .ex-label { background:#e0a800; }
+  .c-pawn   .ex-label { background:#4ecdc4; }
+  .c-check  .ex-label { background:#e74c3c; }
+  .c-mate   .ex-label { background:#d35400; }
+
+  .ex-q { font-size:7.5pt; font-weight:700; color:#333; text-align:center; margin-bottom:2mm; line-height:1.3; width:100%; }
+
+  /* CHESS BOARD — B&W print-friendly */
+  .board-wrap { display:flex; flex-direction:column; align-items:center; }
+  .board-with-rank { display:flex; align-items:stretch; gap:0; }
+  .rank-labels { display:flex; flex-direction:column; justify-content:space-around; padding-right:1mm; }
+  .rank-lbl { font-family:'Fredoka One',cursive; font-size:6pt; color:#555; text-align:right; height:calc(78mm/8); display:flex; align-items:center; }
+  .chess-board { display:grid; grid-template-columns:repeat(8,1fr); width:78mm; height:78mm; border:2px solid #000; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .sq { position:relative; width:calc(78mm/8); height:calc(78mm/8); overflow:hidden; }
+  .lt { background:#fff; }
+  .dk { background:#333; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .act { box-shadow:inset 0 0 0 3px #ff6b35; }
+  .lt.act { background:#ffd699 !important; }
+  .dk.act { background:#c06000 !important; }
+  .piece {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16pt; line-height:1;
+  }
+  .lt .wp { color:#000; }
+  .dk .wp { color:#fff; text-shadow:0 0 2px #000,0 0 1px #000; }
+  .lt .bp { color:#000; }
+  .dk .bp { color:#fff; }
+  .file-row { display:grid; grid-template-columns:repeat(8,1fr); width:78mm; margin-left:0; margin-top:.5mm; }
+  .file-lbl { font-family:'Fredoka One',cursive; font-size:6pt; color:#555; text-align:center; }
+
+  /* ANSWER */
+  .ex-ans { margin-top:2mm; width:100%; display:flex; align-items:center; gap:1.5mm; font-size:7pt; font-weight:700; color:#999; }
+  .ans-l { border-bottom:1.5px solid #bbb; flex:1; height:4mm; }
+
+  @media print {
+    body { background:#fff; }
+    .top-bar { display:none !important; }
+    .pages-wrap { padding:0; gap:0; }
+    .page { box-shadow:none; page-break-after:always; }
+    .page:last-child { page-break-after:avoid; }
+    @page { size:A4; margin:0; }
+    .dk { background:#333 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .lt.act { background:#ffd699 !important; }
+    .dk.act { background:#c06000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <label>Antal sider:</label>
+  <input type="number" id="pc" value="5" min="1" max="20">
+  <button class="btn btn-gen" onclick="gen()">🎲 Generer nye sider</button>
+  <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+</div>
+
+<div id="wrap" class="pages-wrap"></div>
+
+<script>
+const U = {
+  wK:'♔', wQ:'♕', wR:'♖', wB:'♗', wN:'♘', wP:'♙',
+  bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟'
+};
+
+// All exercises — 23 unique beginner positions
+const EX = [
+
+  // ── TÅRNET ──
+  { c:'rook', l:'🏰 Tårnet',
+    q:'Tårnet flyver langs rækker og linjer. Sæt kryds på alle felter det kan flytte til.',
+    board:{ d4:'wR' }, active:'d4',
+    ans:'Langs d-linjen og 4. række — 12 felter i alt!' },
+
+  { c:'rook', l:'🏰 Tårnet',
+    q:'Kan det hvide tårn slå den sorte bonde? Skriv trækket hvis ja.',
+    board:{ d1:'wR', d6:'bP', a8:'bK', h1:'wK' }, active:'d1',
+    ans:'JA — Tårn til d6 (Td6). De er på samme linje!' },
+
+  { c:'rook', l:'🏰 Tårnet',
+    q:'Kan det hvide tårn slå den sorte bonde? Ja eller nej — og hvorfor?',
+    board:{ a1:'wR', e5:'bP', h8:'bK', h1:'wK' }, active:'a1',
+    ans:'NEJ — de er hverken på samme række eller linje.' },
+
+  // ── LØBEREN ──
+  { c:'bishop', l:'🐘 Løberen',
+    q:'Løberen flyver KUN diagonalt. Sæt kryds på alle felter det kan flytte til.',
+    board:{ d4:'wB' }, active:'d4',
+    ans:'Langs begge diagonaler — 13 felter i alt!' },
+
+  { c:'bishop', l:'🐘 Løberen',
+    q:'Kan løberen slå den sorte bonde? Skriv trækket hvis ja.',
+    board:{ c1:'wB', e3:'bP', h8:'bK', e1:'wK' }, active:'c1',
+    ans:'JA — Løber til e3 (Le3). Langs c1→d2→e3 diagonalen!' },
+
+  { c:'bishop', l:'🐘 Løberen',
+    q:'Kan løberen slå den sorte bonde? Ja eller nej?',
+    board:{ c1:'wB', d4:'bP', h8:'bK', e1:'wK' }, active:'c1',
+    ans:'NEJ — d4 er ikke på løberens diagonal fra c1.' },
+
+  // ── SPRINGEREN ──
+  { c:'knight', l:'🐴 Springeren',
+    q:'Springeren springer i L-form: 2 felter én vej + 1 felt til siden. Sæt kryds på alle 8 felter!',
+    board:{ e4:'wN' }, active:'e4',
+    ans:'d6, f6, c5, g5, c3, g3, d2, f2 — altid 8 felter fra midten!' },
+
+  { c:'knight', l:'🐴 Springeren',
+    q:'Springeren er fanget i hjørnet! Kun L-former der passer på brættet tæller. Sæt kryds.',
+    board:{ a1:'wN', h8:'bK', h1:'wK' }, active:'a1',
+    ans:'Kun 2 felter: b3 og c2. Hjørnet giver meget lidt plads!' },
+
+  { c:'knight', l:'🐴 Springeren',
+    q:'Kan springeren slå den sorte løber? Husk: springeren springer over andre brikker!',
+    board:{ d4:'wN', f5:'bB', h8:'bK', h1:'wK' }, active:'d4',
+    ans:'JA — Springer til f5 (Sf5). 2 frem + 1 til højre.' },
+
+  // ── DRONNINGEN ──
+  { c:'queen', l:'👑 Dronningen',
+    q:'Dronningen er den stærkeste brik — den kan som BÅDE tårnet og løberen! Sæt kryds på felterne.',
+    board:{ d4:'wQ' }, active:'d4',
+    ans:'Alle rækker, linjer OG diagonaler — 27 felter fra midten!' },
+
+  { c:'queen', l:'👑 Dronningen',
+    q:'Kan dronningen slå det sorte tårn? Skriv trækket.',
+    board:{ a1:'wQ', h8:'bR', h1:'wK', a8:'bK' }, active:'a1',
+    ans:'JA — Dronning til h8 (Dh8). Langs a1→h8 diagonalen!' },
+
+  // ── KONGEN ──
+  { c:'king', l:'🤴 Kongen',
+    q:'Kongen kan flytte ét felt i alle 8 retninger. Sæt kryds på alle felter kongen kan nå.',
+    board:{ e4:'wK', h8:'bK' }, active:'e4',
+    ans:'d3, d4, d5, e3, e5, f3, f4, f5 — 8 felter fra midten.' },
+
+  { c:'king', l:'🤴 Kongen',
+    q:'Kongen er i hjørnet — der er kun lidt plads! Sæt kryds på de felter kongen KAN nå.',
+    board:{ a1:'wK', h8:'bK' }, active:'a1',
+    ans:'Kun 3 felter: a2, b1 og b2.' },
+
+  // ── BONDEN ──
+  { c:'pawn', l:'🪖 Bonden',
+    q:'Bonden er på startlinjen og kan flytte 1 ELLER 2 felter frem — kun her! Hvortil kan den gå?',
+    board:{ e2:'wP', e1:'wK', h8:'bK' }, active:'e2',
+    ans:'e3 (1 felt) eller e4 (2 felter) — kun muligt fra startlinjen!' },
+
+  { c:'pawn', l:'🪖 Bonden',
+    q:'Bonden har allerede flyttet. Nu kan den kun 1 felt frem. Hvortil kan den gå?',
+    board:{ e4:'wP', e1:'wK', h8:'bK' }, active:'e4',
+    ans:'Kun e5. Bonden kan kun 1 felt frem efter startlinjen.' },
+
+  { c:'pawn', l:'🪖 Bonden',
+    q:'Bonden slår DIAGONALT — aldrig lige frem! Hvilke sorte bønder kan den slå?',
+    board:{ e4:'wP', d5:'bP', f5:'bP', e1:'wK', h8:'bK' }, active:'e4',
+    ans:'Bonden kan slå d5 ELLER f5 — begge er diagonalt foran den!' },
+
+  // ── SKAK ──
+  { c:'check', l:'⚠️ Er kongen i skak?',
+    q:'Det sorte tårn truer! Er den hvide kongen i skak — og hvorfor?',
+    board:{ e1:'wK', e8:'bR', a8:'bK' }, active:'e1',
+    ans:'JA! Tårnet på e8 er på samme linje (e-linjen) som kongen.' },
+
+  { c:'check', l:'⚠️ Er kongen i skak?',
+    q:'Den sorte løber truer! Er den hvide kongen i skak?',
+    board:{ e1:'wK', b4:'bB', a8:'bK' }, active:'e1',
+    ans:'JA! Løberen på b4 giver skak langs b4→c3→d2→e1.' },
+
+  { c:'check', l:'⚠️ Er kongen i skak?',
+    q:'Den sorte springer truer! Springer fra g2 — er kongen i skak? (Husk L-formen!)',
+    board:{ e1:'wK', g2:'bN', a8:'bK' }, active:'e1',
+    ans:'JA! Fra g2: 2 felter til venstre + 1 ned = e1. Skak!' },
+
+  { c:'check', l:'⚠️ Er kongen i skak?',
+    q:'Det sorte tårn står på d8. Er den hvide kongen på e1 i skak?',
+    board:{ e1:'wK', d8:'bR', a8:'bK' }, active:'e1',
+    ans:'NEJ! Tårnet er på d-linjen — kongen er på e-linjen. Ikke skak.' },
+
+  // ── SKAKMAT ──
+  { c:'mate', l:'🏆 Skakmat i 1 træk!',
+    q:'To tårne giver skakmat! Tårnet på a7 holder 7. række. Hvortil skal tårnet på a1 flytte?',
+    board:{ a1:'wR', a7:'wR', h1:'wK', h8:'bK' }, active:'a1',
+    ans:'Tårn til a8! (Ta8#) — 7. række er lukket, 8. række er lukket. Skakmat!' },
+
+  { c:'mate', l:'🏆 Skakmat i 1 træk!',
+    q:'Dronning + tårn samarbejder! Tårnet på g1 beskytter dronningen. Den sorte bonde spærrer h7. Find trækket!',
+    board:{ g7:'wQ', g1:'wR', h1:'wK', h8:'bK', h7:'bP' }, active:'g7',
+    ans:'Dronning til g8! (Dg8#) — kongen kan ikke flytte nogen steder. Skakmat!' },
+
+  { c:'mate', l:'🏆 Skakmat i 1 træk!',
+    q:'Den hvide kongen og dronningen arbejder sammen i hjørnet. Find skakmat i ét træk!',
+    board:{ a6:'wQ', b6:'wK', a8:'bK' }, active:'a6',
+    ans:'Dronning til b7! (Db7#) — kongen dækker b7, dronningen dækker a7 og b8.' },
+
+];
+
+const HDRS = [
+  { h:'♟ Lær at <span>spille skak!</span>',          s:'Løs alle opgaver og bliv en rigtig skakstjerne! ⭐' },
+  { h:'♞ Tænk som en <span>skakspiller!</span>',     s:'Én brik ad gangen — du klarer det! 🎯' },
+  { h:'♝ Bliv <span>skakkongen!</span>',             s:'Øvelse gør mester — kom i gang! 💪' },
+  { h:'♜ Din tur, <span>skakhelt!</span>',            s:'Hvad er det bedste træk? Tænk dig grundigt om! 🧠' },
+  { h:'♛ Fremragende <span>skakmester!</span>',       s:'Du er på vej til toppen! 🏆' },
+  { h:'♟ Stærk som en <span>grandmester!</span>',    s:'Ingen opgave er for svær for dig! 💪' },
+];
+
+let hdrQ = [];
+function pickHdr() {
+  if (!hdrQ.length) {
+    hdrQ = [...HDRS];
+    for (let i = hdrQ.length-1; i>0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [hdrQ[i],hdrQ[j]] = [hdrQ[j],hdrQ[i]];
+    }
+  }
+  return hdrQ.pop();
+}
+
+function renderBoard(data, act) {
+  // Rank labels right-to-left (8 down to 1)
+  let rankHtml = '';
+  for (let r=8; r>=1; r--) rankHtml += `<div class="rank-lbl">${r}</div>`;
+
+  let cells = '';
+  for (let r=8; r>=1; r--) {
+    for (let fi=0; fi<8; fi++) {
+      const sq = String.fromCharCode(97+fi) + r;
+      const dark = (r+fi) % 2 === 1;
+      const piece = data[sq];
+      const isAct = (sq === act);
+      let cls = 'sq ' + (dark ? 'dk' : 'lt') + (isAct ? ' act' : '');
+      const pu = piece ? `<div class="piece"><span class="${piece[0]==='w'?'wp':'bp'}">${U[piece]}</span></div>` : '';
+      cells += `<div class="${cls}">${pu}</div>`;
+    }
+  }
+
+  const files = 'abcdefgh'.split('').map(f=>`<div class="file-lbl">${f}</div>`).join('');
+
+  return `
+    <div class="board-wrap">
+      <div class="board-with-rank">
+        <div class="rank-labels">${rankHtml}</div>
+        <div class="chess-board">${cells}</div>
+      </div>
+      <div class="file-row" style="margin-left:5mm">${files}</div>
+    </div>`;
+}
+
+function exBox(ex) {
+  return `<div class="ex-box c-${ex.c}">
+    <div class="ex-label">${ex.l}</div>
+    <div class="ex-q">${ex.q}</div>
+    ${renderBoard(ex.board, ex.active)}
+    <div class="ex-ans">Svar:&nbsp;<span class="ans-l"></span></div>
+  </div>`;
+}
+
+function gen() {
+  const wrap = document.getElementById('wrap');
+  const n = Math.max(1, Math.min(20, parseInt(document.getElementById('pc').value)||5));
+  wrap.innerHTML = '';
+  hdrQ = [];
+
+  let pool = [];
+  function refill() {
+    const e = [...EX];
+    for (let i=e.length-1;i>0;i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      [e[i],e[j]]=[e[j],e[i]];
+    }
+    pool = [...pool, ...e];
+  }
+
+  for (let p=0; p<n; p++) {
+    if (pool.length < 6) refill();
+    const exs = pool.splice(0, 4);
+    const hl = pickHdr();
+
+    const div = document.createElement('div');
+    div.className = 'page';
+    div.innerHTML = `
+      <div class="pg-badge">Side ${p+1}</div>
+      <div class="pg-header">
+        <h1>${hl.h}</h1>
+        <div class="sub">${hl.s}</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="lp lw">♔</span>&nbsp;Hvid brik</div>
+        <div class="legend-item"><span class="lp lb">♚</span>&nbsp;Sort brik</div>
+        <div class="legend-item"><span class="lp lb">♜</span>&nbsp;= Tårn</div>
+        <div class="legend-item"><span class="lp lb">♝</span>&nbsp;= Løber</div>
+        <div class="legend-item"><span class="lp lb">♞</span>&nbsp;= Springer</div>
+        <div class="legend-item"><span class="lp lb">♛</span>&nbsp;= Dronning</div>
+        <div class="legend-item"><span class="lp lb">♟</span>&nbsp;= Bonde</div>
+        <div class="legend-item"><span class="focus-dot"></span>&nbsp;= Fokus-brik</div>
+      </div>
+      <div class="ex-grid">${exs.map(exBox).join('')}</div>
+    `;
+    wrap.appendChild(div);
+  }
+}
+
+gen();
+</script>
+</body>
+</html>
